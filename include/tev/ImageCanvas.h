@@ -112,6 +112,7 @@ public:
     std::vector<float> getHdrImageData(bool divideAlpha) const;
     std::vector<char> getLdrImageData(bool divideAlpha) const;
 
+	bool copyImageToClipboard() const;
     void saveImage(const filesystem::path& filename) const;
 
     std::shared_ptr<Lazy<std::shared_ptr<CanvasStatistics>>> canvasStatistics();

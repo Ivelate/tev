@@ -309,9 +309,10 @@ ImageViewer::ImageViewer(const shared_ptr<BackgroundImagesLoader>& imagesLoader,
         }
 
         // Playback controls
+		//|TODO(vic) disabled! Because i'll never want to use it
         {
             auto playback = new Widget{mSidebarLayout};
-            playback->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill, 5, 2});
+            //playback->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill, 5, 2});
 
             auto makePlaybackButton = [&](const string& name, bool enabled, function<void()> callback, int icon = 0, string tooltip = "") {
                 auto button = new Button{playback, name, icon};
@@ -356,7 +357,7 @@ ImageViewer::ImageViewer(const shared_ptr<BackgroundImagesLoader>& imagesLoader,
                     }
                 }
             }};
-        }
+        } 
 
         // Save, refresh, load, close
         {
@@ -387,6 +388,10 @@ ImageViewer::ImageViewer(const shared_ptr<BackgroundImagesLoader>& imagesLoader,
             mAnyImageButtons.push_back(makeImageButton("A", false, [this] {
                 reloadAllImages();
             }, ENTYPO_ICON_CYCLE, tfm::format("Reload All (%s+Shift+R or %s+F5)", HelpWindow::COMMAND, HelpWindow::COMMAND)));
+
+			mCurrentImageButtons.push_back(makeImageButton("", false, [this] {
+				mImageCanvas->copyImageToClipboard();
+			}, ENTYPO_ICON_DOWNLOAD, tfm::format("Copy to Clipboard (%s+C)", HelpWindow::COMMAND)));
 
             mCurrentImageButtons.push_back(makeImageButton("", false, [this] {
                 auto* glfwWindow = screen()->glfwWindow();
@@ -635,7 +640,10 @@ bool ImageViewer::keyboardEvent(int key, int scancode, int action, int modifiers
         } else if (key == GLFW_KEY_S && modifiers & SYSTEM_COMMAND_MOD) {
             saveImageDialog();
             return true;
-        } else if (key == GLFW_KEY_P && modifiers & SYSTEM_COMMAND_MOD) {
+        } else if (key == GLFW_KEY_C && modifiers & SYSTEM_COMMAND_MOD) {
+			mImageCanvas->copyImageToClipboard();
+			return true;
+		} else if (key == GLFW_KEY_P && modifiers & SYSTEM_COMMAND_MOD) {
             mFilter->requestFocus();
             return true;
         } else if (key == GLFW_KEY_F) {

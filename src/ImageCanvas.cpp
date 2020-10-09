@@ -392,6 +392,53 @@ std::vector<char> ImageCanvas::getLdrImageData(bool divideAlpha) const {
     return result;
 }
 
+#ifdef _WIN32
+#include <windows.h>
+#include <stb_image_write.h>
+#endif
+
+bool ImageCanvas::copyImageToClipboard() const {
+
+#ifdef _WIN32
+	Vector2i imageSize = mImage->size();
+	std::vector<char> imgData = getLdrImageData(false);
+	if (imgData.empty()) return false;
+
+	std::vector<unsigned char> bitmapBuffer;
+	bitmapBuffer.reserve(imgData.size()); //I guess
+	
+	stbi_write_bmp_to_func([](void *context, void *data, int size)
+	{
+		auto *v = (std::vector<unsigned char>*) (context);
+		v->insert(v->end(), (char*)data, ((char*)(data)) + size);
+	}, &bitmapBuffer, imageSize.x(), imageSize.y(), 4, imgData.data());
+
+	HGLOBAL hResult;
+	if (!OpenClipboard(NULL)) return false;
+	if (!EmptyClipboard()) return false;
+
+	uint32_t buflen = bitmapBuffer.size();
+	buflen -= sizeof(BITMAPFILEHEADER);
+	hResult = GlobalAlloc(GMEM_MOVEABLE, buflen);
+	if (hResult == NULL) return false;
+
+	memcpy(GlobalLock(hResult), bitmapBuffer.data() + sizeof(BITMAPFILEHEADER), buflen);
+	GlobalUnlock(hResult);
+
+	if (SetClipboardData(CF_DIB, hResult) == NULL) {
+		CloseClipboard();
+		return false;
+	}
+
+	CloseClipboard();
+	GlobalFree(hResult);
+	return true;
+#endif
+
+	//Support for other IOs not implemented
+	return false;
+}
+
 void ImageCanvas::saveImage(const path& path) const {
     if (!mImage) {
         return;
